@@ -1,8 +1,0 @@
-/Users/nikitakulikov/Documents/SWork/Minimize/build/CMakeFiles/rebuild_cache.dir
-/Users/nikitakulikov/Documents/SWork/Minimize/build/CMakeFiles/edit_cache.dir
-/Users/nikitakulikov/Documents/SWork/Minimize/build/CMakeFiles/test.dir
-/Users/nikitakulikov/Documents/SWork/Minimize/build/build/test/CMakeFiles/rebuild_cache.dir
-/Users/nikitakulikov/Documents/SWork/Minimize/build/build/test/CMakeFiles/edit_cache.dir
-/Users/nikitakulikov/Documents/SWork/Minimize/build/build/test/CMakeFiles/test.dir
-/Users/nikitakulikov/Documents/SWork/Minimize/build/build/test/CMakeFiles/test2.dir
-/Users/nikitakulikov/Documents/SWork/Minimize/build/build/test/CMakeFiles/test1.dir
