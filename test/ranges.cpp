@@ -87,13 +87,16 @@ BOOST_AUTO_TEST_CASE(ConstRangeSum)
         data1[i] = 12 + 2 * i;
         data2[i] = 138 - i;
     }
-    const auto sr = minimize::ranges::ops::sum_range<vec, vec>(data1, data2);
+    const auto sr = minimize::ranges::ops::sum<vec, vec>(data1, data2);
     BOOST_CHECK_EQUAL(data1.size(), sr.size());
     for(int i = 0; i < len; i++){
         std::cout << i << ' ' << data1.at(i) << ' ' << data2.at(i) << ' ' << sr.at(i) << std::endl;
         BOOST_CHECK_EQUAL(sr.at(i), 12 + 138 + i);
     };
-    const auto mr = minimize::ranges::ops::sub_range<vec, vec>(data1, data2);
+    std::cout << "Lambda size: " << sizeof(minimize::ranges::ops::plus<int, int>) << std::endl;
+    std::cout << "Sum Range size: " << sizeof(sr) << std::endl;
+    std::cout << "Sum Range Iterator size: " << sizeof(sr.begin()) << std::endl;
+    const auto mr = minimize::ranges::ops::sub<vec, vec>(data1, data2);
     BOOST_CHECK_EQUAL(data1.size(), sr.size());
     for(int i = 0; i < len; i++){
         std::cout << i << ' ' << data1.at(i) << ' ' << data2.at(i) << ' ' << mr.at(i) << std::endl;
