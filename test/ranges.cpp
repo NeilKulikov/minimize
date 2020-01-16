@@ -78,4 +78,27 @@ BOOST_AUTO_TEST_CASE(ConstRangeSubs)
     };
 }
 
+BOOST_AUTO_TEST_CASE(ConstRangeSum)
+{
+    const std::size_t len = 5;
+    using vec = std::vector<int>;
+    vec data1(len), data2(len);
+    for(int i = 0; i < len; i++){
+        data1[i] = 12 + 2 * i;
+        data2[i] = 138 - i;
+    }
+    const auto sr = minimize::ranges::ops::sum_range<vec, vec>(data1, data2);
+    BOOST_CHECK_EQUAL(data1.size(), sr.size());
+    for(int i = 0; i < len; i++){
+        std::cout << i << ' ' << data1.at(i) << ' ' << data2.at(i) << ' ' << sr.at(i) << std::endl;
+        BOOST_CHECK_EQUAL(sr.at(i), 12 + 138 + i);
+    };
+    const auto mr = minimize::ranges::ops::sub_range<vec, vec>(data1, data2);
+    BOOST_CHECK_EQUAL(data1.size(), sr.size());
+    for(int i = 0; i < len; i++){
+        std::cout << i << ' ' << data1.at(i) << ' ' << data2.at(i) << ' ' << mr.at(i) << std::endl;
+        BOOST_CHECK_EQUAL(mr.at(i), 12 - 138 + 3 * i);
+    };
+}
+
 BOOST_AUTO_TEST_SUITE_END()

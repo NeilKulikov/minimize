@@ -7,7 +7,10 @@ namespace minimize{
     namespace grad{
         using rv = double;
         using vec = std::vector<double>;
-        class minimizer{
+        struct minimizer_1d{
+
+        };
+        struct minimizer{
             struct result{
                 enum flag{
                     SUCCESS,
@@ -18,6 +21,10 @@ namespace minimize{
                 const rv value;
                 const vec grad;
             };
+            //struct props{
+            //    const rv step
+            //};
+
         };
     };
 };
