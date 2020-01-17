@@ -8,7 +8,10 @@
 #include <algorithm>
 #include <functional>
 
+#include <iostream>
+
 #include <ranges.hpp>
+#include <operations.hpp>
 
 namespace minimize{
     namespace derivate{
@@ -105,10 +108,47 @@ namespace minimize{
             return ret_val;
         };
 
+        template<typename Range1, typename Range2>
+        auto shifted_by_direction(const Range1& r, const Range2& d, const rv& h){
+            const auto dr = ranges::ops::scalar_mul(h, d);
+            return ranges::ops::sum(r, dr);
+        };
+
+        template<typename Func, typename Range1, typename Range2, std::size_t p_num>
+        std::array<rv, p_num> values_by_direction(
+                const std::array<rv, p_num> shifts,
+                const Func& func, 
+                const Range1& r, 
+                const Range2& d){
+            std::array<rv, p_num> ret_val;
+            std::transform(shifts.cbegin(), shifts.cend(), ret_val.begin(),
+                [&](const double sh){ 
+                    const auto nx = shifted_by_direction(r, d, sh);
+                    return func(nx);
+                });
+            return ret_val;
+        };
+
+        template<typename Func, typename Range1, typename Range2, std::size_t p_num>
+        double derive_by_directiona(const Func& func,
+                const Range1& r, const Range2& d, const rv& h, const constants::derivative_props<p_num>& p){
+            using arr = std::array<rv, p_num>;
+            const arr shifts(p.shifts(h));
+            const arr vals(std::move(
+                values_by_direction<Func, Range1, Range2, p_num>(shifts, func, r, d)));
+            return compute_derivation(vals, p, h);
+        };
+
         template<typename Func, typename Range1, typename Range2>
         double derive_by_direction(const Func& func,
-                const Range1& r, const Range2& d, const rv h = 1.e-8){
-            return 0;
+                const Range1& r, const Range2& d, const rv& h = 1.e-8){
+            return derive_by_directiona<Func, Range1, Range2, 5>(func, r, d, h, constants::five);
+        };
+
+        template<typename Func, typename Range1, typename Range2>
+        double derive_by_direction_3(const Func& func,
+                const Range1& r, const Range2& d, const rv& h = 1.e-8){
+            return derive_by_directiona<Func, Range1, Range2, 3>(func, r, d, h, constants::three);
         };
     };
 };

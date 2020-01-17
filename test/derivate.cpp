@@ -74,4 +74,27 @@ BOOST_AUTO_TEST_CASE(Derivate2D)
     BOOST_CHECK_CLOSE(der1.at(1), 28., 1.e-4);
 }
 
+BOOST_AUTO_TEST_CASE(ShiftedByDirection2D)
+{
+    using vec = std::vector<double>;
+    vec x0{1., 1.}, x1{3., 2.};
+    const auto res = minimize::derivate::shifted_by_direction(x0, x1, 0.5);
+    std::cout << res.at(0) << ' ' << res.at(1) << std::endl;
+    BOOST_CHECK_CLOSE(res.at(0), 2.5, 1.e-4);
+    BOOST_CHECK_CLOSE(res.at(1), 2., 1.e-4);
+}
+
+BOOST_AUTO_TEST_CASE(DerivateByDirection2D)
+{
+    const functor_nd func;
+    const auto v = 1. / std::sqrt(2.);
+    std::vector<double> x0{1., 1.}, x1{3., 2.}, d{v, v};
+    const auto xr0 = minimize::ranges::const_range(x0),
+               dr = minimize::ranges::const_range(d);
+    const auto grad = minimize::derivate::auto_grad(func, xr0);
+    const auto res0 = minimize::derivate::derive_by_direction(func, xr0, dr),
+               res1 = std::inner_product(grad.cbegin(), grad.cend(), dr.cbegin(), 0.); 
+    BOOST_CHECK_CLOSE(res0, res1, 1.e-4);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

@@ -106,6 +106,14 @@ namespace minimize{
                     subs_iterator(const subs_iterator& prev_it):
                         subs_iterator(prev_it._begin, prev_it._end, prev_it._body)
                         {};
+                    bool operator==(const subs_iterator<it>& oth){
+                        if(_body != oth._body)
+                            throw std::logic_error("Incomparable iterators");
+                        return iterator<it>::operator==(oth);
+                    };
+                    bool operator!=(const subs_iterator<it>& oth){
+                        return !operator==(oth);
+                    };
                     value_type operator*(void) const{
                         const bool out = num_iterator<it>::num() == _body.first;
                         return out ? _body.second : num_iterator<it>::operator*();
@@ -133,8 +141,8 @@ namespace minimize{
                         return _oper(*_cur1, *_cur2);
                     };
                     value_type operator++(void){
-                        _cur1 = std::next(_cur1);
-                        _cur2 = std::next(_cur2);
+                        _cur1++;
+                        _cur2++;
                         return operator*();
                     };
                     value_type operator++(int){
@@ -148,6 +156,93 @@ namespace minimize{
                     bool operator!=(const bop_iterator<it1, it2, op>& oth){
                         return !operator==(oth);
                     };
+                    it1 current(void) const{
+                        return *_cur1;
+                    };
+            };
+            template<typename T>
+            class scalar_iterator: public std::iterator<std::forward_iterator_tag, T>{
+                public:
+                    using value_type = T;
+                    using reference = const T&;
+                    using const_reference = const T&;
+                protected:
+                    std::size_t _num;
+                    const T _body;
+                public:
+                    scalar_iterator(const std::size_t num, const T& body):
+                        _num(num),
+                        _body(body)
+                        {};
+                    scalar_iterator(const scalar_iterator<T>& si):
+                        scalar_iterator(si._num, si._body)
+                        {};
+                    value_type operator*(int) const{
+                        return _body;
+                    };
+                    const_reference operator*(void) const{
+                        return _body;
+                    };
+                    const_reference body(void) const{
+                        return _body;
+                    };
+                    scalar_iterator<T>& operator++(void){
+                        _num++;
+                        return *this;
+                    };
+                    scalar_iterator<T> operator++(int){
+                        scalar_iterator<T> ret_val(*this);
+                        _num++;
+                        return ret_val;
+                    };
+                    bool operator==(const scalar_iterator<T>& si) const{
+                        if(_body != si._body)
+                            throw std::logic_error("Incomparable iterators");
+                        return (_num == si._num);
+                    };
+                    bool operator!=(const scalar_iterator<T>& si) const{
+                        return operator==(si);
+                    };
+                    std::size_t current(void) const{
+                        return _num;
+                    };
+            };
+        };
+        namespace dists{
+            template<typename it>
+            typename it::difference_type distance(it first, it last){
+                //std::cout << "Std distance" << std::endl;
+                return std::distance(first, last);
+            };
+            template<typename it>
+            typename iters::iterator<it>::difference_type distance(
+                    iters::iterator<it> first,  iters::iterator<it> last){
+                //std::cout << "Iterator distance" << std::endl;
+                return distance(first.current(), last.current());
+            };
+            template<typename it>
+            typename iters::num_iterator<it>::difference_type distance(
+                    iters::num_iterator<it> first,  iters::num_iterator<it> last){
+                //std::cout << "Num iterator distance" << std::endl;
+                return distance(first.current(), last.current());
+            };
+            template<typename it>
+            typename iters::subs_iterator<it>::difference_type distance(
+                    iters::subs_iterator<it> first,  iters::subs_iterator<it> last){
+                //std::cout << "Subs iterator distance" << std::endl;
+                return distance<it>(first.current(), last.current());
+            };
+            template<typename it1, typename it2, typename op>
+            typename iters::bop_iterator<it1, it2, op>::difference_type distance(
+                    iters::bop_iterator<it1, it2, op> first, iters::bop_iterator<it1, it2, op> last){
+                //std::cout << "Bop iterator distance" << std::endl;
+                return distance(first.current(), last.current());
+            };
+            template<typename T>
+            typename iters::scalar_iterator<T>::difference_type distance(
+                    iters::scalar_iterator<T> first,  iters::scalar_iterator<T> last){
+                //std::cout << "Scalar iterator distance" << std::endl;
+                return last.current() - first.current();
             };
         };
         template<typename T, typename it>
@@ -218,21 +313,6 @@ namespace minimize{
                     const_range(cont.cbegin(), cont.cend())
                     {};
         };
-        /*template<typename T>
-        class range : public range_proto<T, typename T::iterator>{
-            public:
-                using co = T;
-                using ty = typename T::value_type;
-                using it = typename T::iterator;
-                using value_type = ty;
-            public:
-                range(const it begin, const it end):
-                    range_proto<T, it>(begin, end)
-                    {};
-                range(T& cont):
-                    range<T>(cont.begin(), cont.end())
-                    {};
-        };*/
         template<typename T>
         class num_range : public const_range<T>{
             private:
@@ -321,6 +401,54 @@ namespace minimize{
                     return (num == _body.first)? _body.second :num_range<T>::at(num);
                 };
         }; 
+        template<typename T>
+        class scalar_range{
+            public:
+                using value_type = T;
+                using reference = const T&;
+                using const_reference = const T&;
+                using iterator = iters::scalar_iterator<T>;
+                using const_iterator = iters::scalar_iterator<T>;
+            protected:
+                const std::size_t _size;
+                const T _body;
+                void check(const std::size_t num) const{
+                    if(num > _size) throw std::length_error("Num should be less than scalar_range size.");
+                };
+            public:
+                scalar_range(const std::size_t size, const T& body):
+                    _size(size), _body(body)
+                    {};
+                scalar_range(const scalar_range<T>& sr):
+                    _size(sr._size), _body(sr._body)
+                    {};
+                std::size_t size(void) const{
+                    return _size;
+                };
+                const T& body(void) const{
+                    return _body;
+                };
+                const_iterator cbegin(void) const{
+                    return iterator(0, _body);
+                };
+                const_iterator cend(void) const{
+                    return iterator(_size, _body);
+                };
+                iterator begin(void) const{
+                    return cbegin();
+                };
+                iterator end(void) const{
+                    return cend();
+                };
+                iterator iterator_at(const std::size_t num){
+                    check(num);
+                    return iterator(num, _body);
+                };
+                value_type at(const std::size_t num){
+                    check(num);
+                    return _body;
+                };
+        };
         template<typename T1, typename T2, typename op>
         class bop_range{
             public:
@@ -342,25 +470,25 @@ namespace minimize{
                     _oper(oper),
                     _beg1(c1.begin()), _end1(c1.end()),
                     _beg2(c2.begin()), _end2(c2.end()),
-                    _size(std::distance(_beg1, _end1))
+                    _size(dists::distance(_beg1, _end1))
                     {
-                        if(std::distance(_beg1, _end1) != std::distance(_beg2, _end2))
+                        if(c1.size() != c2.size())
                             throw std::length_error("cont1 should have same length with cont2");
                     };
                 bop_range(const op& oper, const T1& c1, const T2& c2):
                     _oper(oper),
                     _beg1(c1.cbegin()), _end1(c1.cend()),
                     _beg2(c2.cbegin()), _end2(c2.cend()),
-                    _size(std::distance(_beg1, _end1))
+                    _size(dists::distance(_beg1, _end1))
                     {
-                        if(std::distance(_beg1, _end1) != std::distance(_beg2, _end2))
+                        if(c1.size() != c2.size())
                             throw std::length_error("cont1 should have same length with cont2");
                     };
                 iterator cbegin(void) const{
-                    return {_beg1, _beg2};
+                    return iterator(_oper, _beg1, _beg2);
                 };
                 iterator cend(void) const{
-                    return {_beg1, _beg2};
+                    return iterator(_oper, _end1, _end2);
                 };
                 iterator begin(void) const{ return begin();};
                 iterator end(void) const{ return cend(); };
@@ -381,43 +509,6 @@ namespace minimize{
                 std::size_t size(void) const{
                     return _size;
                 };
-        };
-
-        namespace ops{
-            template<typename T>
-            using bop = const typename std::function<T(T, T)>&;
-            template<typename T1, typename T2, typename R>
-            using rbop = const typename std::function<R(T1, T2)>&;
-
-            template<typename T1, typename T2>
-            constexpr auto plus = [](T1 a, T2 b) -> decltype(a + b) { return a + b; };
-            template<typename T1, typename T2>
-            auto sum(const T1& c1, const T2& c2){
-                using ty1 = typename T1::value_type;
-                using ty2 = typename T2::value_type;
-                using bop = decltype(plus<ty1, ty2>);
-                return bop_range<T1, T2, bop>(plus<ty1, ty2>, c1, c2);
-            };
-
-            template<typename T1, typename T2>
-            constexpr auto minus = [](T1 a, T2 b) -> decltype(a - b) { return a - b; };
-            template<typename T1, typename T2>
-            auto sub(const T1& c1, const T2& c2){
-                using ty1 = typename T1::value_type;
-                using ty2 = typename T2::value_type;
-                using bop = decltype(minus<ty1, ty2>);
-                return bop_range<T1, T2, bop>(minus<ty1, ty2>, c1, c2);
-            };
-
-            template<typename T1, typename T2>
-            constexpr auto multiply = [](T1 a, T2 b) -> decltype(a * b) { return a * b; };
-            template<typename T1, typename T2>
-            auto mul(const T1& c1, const T2& c2){
-                using ty1 = typename T1::value_type;
-                using ty2 = typename T2::value_type;
-                using bop = decltype(multiply<ty1, ty2>);
-                return bop_range<T1, T2, bop>(multiply<ty1, ty2>, c1, c2);
-            };
         };
     };
 }; 
