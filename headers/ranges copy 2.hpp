@@ -11,12 +11,11 @@ namespace minimize{
     namespace ranges{
         namespace iters{
             template<typename it>
-            class iterator : 
-                    public std::iterator<std::forward_iterator_tag, typename it::value_type>{
+            class iterator : public std::iterator<std::forward_iterator_tag, typename it::value_type>{
                 public:
-                    using value_type = typename it::value_type;
-                    using reference = typename it::reference;
-                    using const_reference = typename it::reference;
+                    using ty = typename it::value_type;
+                    using re = typename it::reference;
+                    using value_type = ty;
                 protected:
                     it _current;
                 public:
@@ -27,7 +26,7 @@ namespace minimize{
                         iterator(prev_it._current)
                         {};
                     iterator<it>& operator++(void){
-                        (this->_current)++;
+                        _current++;
                         return *this;
                     };
                     iterator<it> operator++(int){
@@ -36,42 +35,38 @@ namespace minimize{
                         return std::move(ret_val);
                     };
                     bool operator==(const iterator<it>& oth) const{
-                        return (this->_current) == (oth._current);
+                        return (_current == oth._current);
                     };
                     bool operator!=(const iterator<it>& oth) const{
                         return !operator==(oth);
                     };
-                    reference operator*(void){
-                        return *(this->_current);
+                    re operator*(void){
+                        return *_current;
                     };
-                    const_reference operator*(void) const{
-                        return *(this->_current);
-                    };
-                    value_type operator*(int) const{
-                        return *(this->_current);
-                    };
-                    it current(void) const{
-                        return _current;
+                    const re operator*(void) const{
+                        return *_current;
                     };
             };
             template<typename it>
             class num_iterator : public iterator<it>{
                 public:
-                    using value_type = typename it::value_type;
-                    using reference = typename it::reference;
-                    using const_reference = const typename it::reference;
+                    using par = iterator<it>;
+                    using ty = typename it::value_type;
+                    using re = typename it::reference;
+                    using value_type = ty;
                 protected:
                     const it _begin;
                 public:
-                    num_iterator(const it begin, it current):
+                    num_iterator(const it begin, const it current):
                         iterator<it>(current),
                         _begin(begin)
                         {};
-                    num_iterator(const num_iterator<it>& prev_it):
+                    num_iterator(num_iterator<it>& prev_it):
                         num_iterator(prev_it._begin, prev_it._current)
                         {};
                     num_iterator<it>& operator++(void){
-                        (this->_current) = std::next(this->_current);
+                        iterator<it>::_current = 
+                            std::next(iterator<it>::_current);
                         return *this;
                     };
                     num_iterator<it> operator++(int){
@@ -80,35 +75,40 @@ namespace minimize{
                         return std::move(ret_val);
                     };
                     bool operator==(const num_iterator<it>& oth) const{
-                        return iterator<it>::operator==(oth) && (_begin == oth._begin);
+                        return 
+                            iterator<it>::operator==(oth)
+                                &&
+                            (_begin == oth._begin);
                     };
                     bool operator!=(const num_iterator<it>& oth) const{
                         return !operator==(oth);
                     };
                     std::size_t num(void) const{
-                        return std::distance(_begin, this->_current);
+                        it beg = _begin;
+                        return std::distance(beg, iterator<it>::_current);
                     };
             };
             template<typename it>
             class subs_iterator : public num_iterator<it>{
                 public:
-                    using value_type = typename it::value_type;
-                    using reference = typename it::reference;
-                    using const_reference = const typename it::reference;
-                    using subs = typename std::pair<const std::size_t, value_type>;
+                    using ty = typename iterator<it>::ty;
+                    using subs = typename std::pair<std::size_t, ty>;
+                    using value_type = ty;
                 protected:
-                    subs _body;
+                    const subs _body;
                 public:
-                    subs_iterator(const it begin, it current, subs body):
+                    subs_iterator(const it begin, const it current, const subs body):
                         num_iterator<it>(begin, current),
                         _body(body)
                         {};
-                    subs_iterator(const subs_iterator& prev_it):
+                    subs_iterator(subs_iterator& prev_it):
                         subs_iterator(prev_it._begin, prev_it._end, prev_it._body)
                         {};
-                    value_type operator*(void) const{
+                    ty operator*(void) const{
                         const bool out = num_iterator<it>::num() == _body.first;
-                        return out ? _body.second : num_iterator<it>::operator*();
+                        return out ?
+                                _body.second :
+                                num_iterator<it>::operator*();
                     };
             };
             template<typename it1, typename it2, typename op>
@@ -117,7 +117,8 @@ namespace minimize{
                 public:
                     using ty1 = typename it1::value_type;
                     using ty2 = typename it2::value_type;
-                    using value_type = typename std::result_of<op(ty1, ty2)>::type;
+                    using ty = typename std::result_of<op(ty1, ty2)>::type;
+                    using value_type = ty;
                 protected:
                     const op _oper;
                 protected:
@@ -129,16 +130,16 @@ namespace minimize{
                         _cur1(iter1),
                         _cur2(iter2)
                         {};
-                    value_type operator*(void) const{
+                    ty operator*(void) const{
                         return _oper(*_cur1, *_cur2);
                     };
-                    value_type operator++(void){
+                    ty operator++(void){
                         _cur1 = std::next(_cur1);
                         _cur2 = std::next(_cur2);
                         return operator*();
                     };
-                    value_type operator++(int){
-                        value_type ret_val = operator*();
+                    ty operator++(int){
+                        ty ret_val = operator*();
                         operator++();
                         return std::move(ret_val);
                     };
@@ -153,17 +154,24 @@ namespace minimize{
         template<typename T, typename it>
         class range_proto{
             public:
-                using container = T;
+                using co = T;
+                using ty = typename it::value_type;
+                using re = typename it::reference;
                 using iterator = typename iters::iterator<it>;
-                using const_iterator = typename iters::iterator<it>;
-                using reference = typename T::const_reference;
-                using const_reference = typename T::const_reference;
-                using value_type = typename T::value_type;
+                using const_iterator = iterator;
+                using value_type = ty;
             public:
                 const it _begin, _end;
             public:
                 range_proto(const it begin, const it end):
-                    _begin(begin), _end(end)
+                    _begin(begin),
+                    _end(end)
+                    {};
+                range_proto(T& cont):
+                    range_proto(cont.begin(), cont.end())
+                    {};
+                range_proto(const T& cont):
+                    range_proto(cont.cbegin(), cont.cend())
                     {};
                 std::size_t size(void) const{
                     return std::distance(_begin, _end);
@@ -181,44 +189,47 @@ namespace minimize{
                 iterator iterator_at(const std::size_t num) const{
                     return iterator(std::next(_begin, num));
                 };
-                reference at(const size_t num){
+                re at(const size_t num){
                     return *std::next(_begin, num);
                 };
-                const_reference at(const size_t num) const{
+                const re at(const size_t num) const{
+                    return *std::next(_begin, num);
+                };
+                ty at(const size_t num, int) const{
                     return *std::next(_begin, num);
                 };
         };
         template<typename T>
         class const_range : public range_proto<T, typename T::const_iterator>{
-            private:
-                using proto_iterator = typename T::const_iterator;
-                using proto_range = range_proto<T, proto_iterator>;
             public:
-                using container = T;
-                using iterator = proto_iterator;
-                using const_iterator = proto_iterator;
-                using reference = typename T::const_reference;
-                using const_reference = typename T::const_reference;
-                using value_type = typename T::value_type;
+                using co = T;
+                using ty = typename T::value_type;
+                using it = typename T::const_iterator;
+                using re = typename T::const_reference;
+                using const_reference = re;
+                using pr = range_proto<T, it>;
+                using const_iterator = typename pr::iterator;
+                using iterator = const_iterator;
+                using value_type = ty;
             public:
                 const_iterator cbegin(void) const{
-                    return this->_begin;
+                    return pr::begin();
                 };
                 const_iterator cend(void) const{
-                    return this->_end;
+                    return pr::end();
                 };
             public:
-                const_range(const proto_iterator begin, const proto_iterator end):
-                    range_proto<T, proto_iterator>(begin, end)
+                const_range(const it begin, const it end):
+                    range_proto<T, typename T::const_iterator>(begin, end)
                     {};
                 const_range(const const_range<T>& cont):
-                    range_proto<T, proto_iterator>(cont._begin, cont._end)
+                    range_proto<T, typename T::const_iterator>(cont._begin, cont._end)
                     {};
                 const_range(const T& cont):
                     const_range(cont.cbegin(), cont.cend())
                     {};
         };
-        /*template<typename T>
+        template<typename T>
         class range : public range_proto<T, typename T::iterator>{
             public:
                 using co = T;
@@ -232,92 +243,74 @@ namespace minimize{
                 range(T& cont):
                     range<T>(cont.begin(), cont.end())
                     {};
-        };*/
+        };  
         template<typename T>
         class num_range : public const_range<T>{
-            private:
-                using proto_iterator = typename T::const_iterator;
-                using proto_range = range_proto<T, proto_iterator>;
             public:
-                using container = T;
-                using iterator = typename iters::num_iterator<proto_iterator>;
-                using const_iterator = typename iters::num_iterator<proto_iterator>;
-                using reference = typename T::reference;
-                using const_reference = const typename T::reference;
-                using value_type = typename T::value_type;
+                using co = T;
+                using cr = const_range<T>;
+                using ty = typename cr::ty;
+                using it = typename cr::it;
+                using re = typename cr::re;
+                using iterator = typename iters::num_iterator<it>;
+                using value_type = ty;
             public:
-                num_range(const proto_iterator beg, const proto_iterator end):
-                    const_range<T>(beg, end)
-                    {};
                 num_range(const const_range<T>& cr):
-                    num_range(cr.cbegin(), cr.cend())
+                    const_range<T>(cr)
                     {};
                 num_range(const num_range<T>& cr):
-                    num_range(cr.cbegin(), cr.cend())
+                    num_range<T>(reinterpret_cast<const const_range<T>&>(cr))
                     {};
-                num_range(const T& co):
-                    num_range(co.cbegin(), co.cend())
+                num_range(const T& cont):
+                    num_range(const_range<T>(cont))
                     {};
             public:
-                const_iterator cbegin(void) const{
-                    return const_iterator(this->_begin, this->_begin);
+                iterator begin(void) const{
+                    return iterator(cr::_begin, cr::_begin);
                 };
-                const_iterator cend(void) const{
-                    return const_iterator(this->_begin, this->_end);
+                iterator end(void) const{
+                    return iterator(cr::_begin, cr::_end);
                 };
-                const_iterator iterator_at(const std::size_t num) const{
-                    const auto current = const_range<T>::iterator_at(num).current();
-                    return const_iterator(this->_begin, current);
+                iterator iterator_at(const std::size_t num) const{
+                    return iterator(cr::_begin, cr::iterator_at(num));
                 };
         };
         template<typename T> 
         class subs_range : public num_range<T>{
-            private:
-                using proto_iterator = typename T::const_iterator;
-                using proto_range = range_proto<T, proto_iterator>;
             public:
-                using container = T;
-                using iterator = typename iters::subs_iterator<proto_iterator>;
-                using const_iterator = typename iters::subs_iterator<proto_iterator>;
-                using reference = typename T::reference;
-                using const_reference = const typename T::reference;
-                using value_type = typename T::value_type;
-                using subs = typename std::pair<const std::size_t, value_type>;
+                using co = T;
+                using cr = num_range<T>;
+                using ty = typename cr::ty;
+                using it = typename cr::it;
+                using re = typename cr::re;
+                using subs = typename std::pair<const std::size_t, ty>;
+                using iterator = typename iters::subs_iterator<it>;
+                using value_type = ty;
             protected:
                 const subs _body;
             public:
-                subs_range(const proto_iterator beg, proto_iterator cur, const subs body):
-                    num_range<T>(beg, cur),
-                    _body(std::move(body))
+                subs_range(num_range<T> nr, const subs body):
+                    num_range<T>(nr),
+                    _body(body)
                     {};
                 subs_range(const T& cont, const subs body):
-                    subs_range(cont.cbegin(), cont.cend(), body)
-                    {};
-                template<typename P>
-                subs_range(const P& cont, const subs body):
-                    subs_range(cont.cbegin(), cont.cend(), body)
+                    subs_range(num_range<T>(cont), body)
                     {};
             public:
-                const_iterator begin(void) const{
-                    return const_iterator(this->_begin, this->_begin, _body);
+                iterator begin(void) const{
+                    return iterator(cr::_begin, cr::_begin, _body);
                 };
-                const_iterator end(void) const{
-                    return const_iterator(this->_begin, this->_end, _body);
+                iterator end(void) const{
+                    return iterator(cr::_begin, cr::_end, _body);
                 };
-                const_iterator cbegin(void) const{
-                    return begin();
+                iterator iterator_at(const std::size_t num) const{
+
+                    return iterator(cr::_begin, cr::iterator_at(num), _body);
                 };
-                const_iterator cend(void) const{
-                    return end();
+                const re at(const std::size_t num) const{
+                    return (num == _body.first)? _body.second :num_range<T>::at(num);
                 };
-                const_iterator iterator_at(const std::size_t num) const{
-                    const auto current = num_range<T>::iterator_at(num).current();
-                    return const_iterator(this->_begin, current, _body);
-                };
-                /*const_reference at(const std::size_t num) const{
-                    return (num == _body.first) ? _body.second : num_range<T>::at(num);
-                };*/
-                value_type at(const std::size_t num) const{
+                ty at(const std::size_t num, int) const{
                     return (num == _body.first)? _body.second :num_range<T>::at(num);
                 };
         }; 

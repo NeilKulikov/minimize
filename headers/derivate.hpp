@@ -45,9 +45,9 @@ namespace minimize{
         };
 
         template<typename Range>
-        ranges::subs_range<typename Range::co> shifted_x(const Range& r, 
+        ranges::subs_range<typename Range::container> shifted_x(const Range& r, 
                 const std::size_t d, const rv h){
-            return ranges::subs_range<typename Range::co>(r, {d, r.at(d) + h});
+            return ranges::subs_range<typename Range::container>(r, {d, r.at(d) + h});
         };
 
         template<typename Func, typename Range, std::size_t p_num>
