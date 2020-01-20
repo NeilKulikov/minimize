@@ -1,0 +1,48 @@
+        enum flag{
+                SUCCESS,
+                FAILURE
+            };
+        struct min_result_1d{
+            const flag status = FAILURE;
+            const rv x;
+            const rv value;
+        };
+        template<typename Range>
+        struct circle_bounds{
+            const Range center;
+            const rv radius;
+            std::size_t dim(void) const{
+                return center.size();
+            };
+            template<typename DirRange>
+            auto operator()(const DirRange& d) const{
+                const auto  dp = ranges::ops::scalar_mul(radius, d);
+                            mp = ranges::ops::scalar_mul(-radius, d);
+                const auto  pr = ranges::ops::sum(dp, center),
+                            mr = ranges::ops::sum(mp, center);
+                return std::make_pair(std::move(pr), std::move(mr));
+            };
+        };
+        struct min_result_nd{
+            const flag status = FAILURE;
+            const vec x;
+            const rv value;
+        };
+
+                rv lin(const std::pair<rv,rv>& b, const rv& x){
+            return b.first * x + b.second * (1. - x);
+        };
+        auto shifts(const std::pair<rv,rv>& b){
+            constexpr std::array ps{0., FPHI, SPHI, 1.};
+            return std::array{lin(b, ps[0]), 
+                lin(b, ps[1]), lin(b, ps[2]), lin(b, ps[3])}
+        };
+        template<typename Func, std::size_t num>
+        auto values(const Func& f, const std::array<rv, num>& shs){
+            std::array<rv, num> ret_val;
+            std::transform(shs.cbegin(), shs.cend(), ret_val.begin(), f);
+            return ret_val;
+        };
+        bool golden_ratio_check(const std::pair<rv,rv>& b, const rv& tol){
+            return std::abs(b.first - b.second) < tol;
+        };

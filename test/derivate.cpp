@@ -18,6 +18,25 @@ struct functor{
     };
 };
 
+struct functor_1d{
+    double x0;
+    double operator()(const double& x) const{
+        return x * (x - x0);
+    };
+};
+
+BOOST_AUTO_TEST_CASE(Derivate1DReal)
+{
+    const functor_1d func{2.};
+    std::vector<double> x0{10.};
+    auto    der0 = minimize::derivate::derive_1D(func, 10.),
+            der1 = minimize::derivate::derive_1D(func, 5.),
+            der2 = minimize::derivate::derive_1D(func, -2.);
+    BOOST_CHECK_CLOSE(der0, 18., 1.e-4);
+    BOOST_CHECK_CLOSE(der1, 8., 1.e-4);
+    BOOST_CHECK_CLOSE(der2, -6., 1.e-4);
+}
+
 BOOST_AUTO_TEST_CASE(Derivate1D)
 {
     const functor func{2.};

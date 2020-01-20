@@ -121,10 +121,10 @@ namespace minimize{
             };
             template<typename it1, typename it2, typename op>
             class bop_iterator: public std::iterator<std::forward_iterator_tag, 
-                    typename std::result_of<op(typename std::iterator_traits<it1>::value_type, typename std::iterator_traits<it2>::value_type)>::type >{
+                    typename std::result_of<op(typename it1::value_type, typename it2::value_type)>::type >{
                 public:
-                    using ty1 = typename std::iterator_traits<it1>::value_type;
-                    using ty2 = typename std::iterator_traits<it2>::value_type;
+                    using ty1 = typename it1::value_type;
+                    using ty2 = typename it2::value_type;
                     using value_type = typename std::result_of<op(ty1, ty2)>::type;
                 protected:
                     const op _oper;

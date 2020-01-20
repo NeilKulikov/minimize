@@ -39,23 +39,23 @@ namespace minimize{
                 return ret_val;
             };
             template<>
-            auto derivative_props<5>::shifts(const rv h){
-                std::array<rv, 5> ret_val{-2. * h, -h, 0., h, 2. * h};
+            auto derivative_props<4>::shifts(const rv h){
+                std::array<rv, 4> ret_val{-2. * h, -h, h, 2. * h};
                 return ret_val;
             };
-            constexpr derivative_props<5> five{{1., -8., 0., 8., -1}, 12.};
+            constexpr derivative_props<4> four{{1., -8., 8., -1}, 12.};
             constexpr derivative_props<3> three{{-1., 1.}, 2.};
         };
 
         template<typename Range>
-        ranges::subs_range<typename Range::container> shifted_x(const Range& r, 
+        auto shifted_x(const Range& r, 
                 const std::size_t d, const rv h){
-            return ranges::subs_range<typename Range::container>(r, {d, r.at(d) + h});
+            return ranges::subs_range(r, {d, r.at(d) + h});
         };
 
         template<typename Func, typename Range, std::size_t p_num>
         std::array<rv, p_num> values_by_axis(
-                const std::array<rv, p_num> shifts,
+                const std::array<rv, p_num>& shifts,
                 const Func& func, 
                 const Range& r, 
                 const std::size_t d){
@@ -65,6 +65,16 @@ namespace minimize{
                     const auto nx = shifted_x(r, d, sh);
                     return func(nx);
                 });
+            return ret_val;
+        };
+
+        template<typename Func, typename Range, std::size_t p_num>
+        std::array<rv, p_num> values_1D(
+                const Range& xs,
+                const Func& func){
+            std::array<rv, p_num> ret_val;
+            std::transform(xs.cbegin(), xs.cend(), ret_val.begin(),
+                [&](const double x){ return func(x); });
             return ret_val;
         };
 
@@ -82,15 +92,33 @@ namespace minimize{
             const arr shifts(p.shifts(h));
             const arr vals(std::move(
                 values_by_axis<Func, Range, p_num>(shifts, func, r, d)));
-            return compute_derivation(vals, constants::five, h);
+            return compute_derivation(vals, p, h);
         };
 
 
         template<typename Func, typename Range>
         double derive_by_axis(const Func& func,
                 const Range& r, const std::size_t d, const rv h = 1.e-8){
-            return derive_by_axis(func, r, d, h, constants::five);
+            return derive_by_axis(func, r, d, h, constants::four);
         };  
+
+        template<typename Func, std::size_t p_num>
+        double derive_1D(const Func& f, const rv& x, const rv h, 
+                const constants::derivative_props<p_num>& p){
+            using arr = std::array<rv, p_num>;
+            const arr shifts(p.shifts(h));
+            const auto shr = ranges::const_range(shifts);
+            const auto srx = ranges::scalar_range(p_num, x);
+            const auto shx = ranges::ops::sum(srx, shr);
+            const arr vals(std::move(
+                values_1D<Func, decltype(shx), p_num>(shx, f)));
+            return compute_derivation(vals, p, h);
+        };
+
+        template<typename Func>
+        double derive_1D(const Func& f, const rv x, const rv h = 1.e-8){
+            return derive_1D<Func, 4>(f, x, h, constants::four);
+        };
 
         template<typename Func, typename Range>
         double derive_by_axis_3(const Func& func,
@@ -142,7 +170,7 @@ namespace minimize{
         template<typename Func, typename Range1, typename Range2>
         double derive_by_direction(const Func& func,
                 const Range1& r, const Range2& d, const rv& h = 1.e-8){
-            return derive_by_directiona<Func, Range1, Range2, 5>(func, r, d, h, constants::five);
+            return derive_by_directiona<Func, Range1, Range2, 4>(func, r, d, h, constants::four);
         };
 
         template<typename Func, typename Range1, typename Range2>

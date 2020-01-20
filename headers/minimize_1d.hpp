@@ -1,27 +1,17 @@
-#ifndef GRAD_MINIMIZE
-#define GRAD_MINIMIZE
+#ifndef MINIMIZE_1D
+#define MINIMIZE_1D
 
 #define FPHI 0.618033988749894848204586834365638117720309179805762862135
 #define SPHI 0.381966011250105151795413165634361882279690820194237137864
 
-#include <vector>
-
 #include <cmath>
-#include <numeric>
-#include <utility>
-#include <exception>
-#include <algorithm>
-#include <functional>
 
 #include <ranges.hpp>
 #include <operations.hpp>
-#include <derivate.hpp>
 
 namespace minimize{
-    namespace grad{
+    namespace D1{
         using rv = double;
-        using vec = std::vector<double>;
-
         template<typename Func>
         std::pair<bool, rv> golden_ratio_minimize(
                 const Func& f, 
@@ -58,13 +48,18 @@ namespace minimize{
             };
             return {false, 0};
         };
+
         template<typename Func>
         rv auto_golden_ratio_minimize(
                 const Func& f, 
                 const std::pair<rv, rv> bounds, 
-                const rv tol,
-                const std::size_t max_steps){
-            const auto h = bounds.second
+                const rv tol = 1.e-8){
+            const auto h = std::abs(bounds.second - bounds.first);
+            const auto rvn = std::log(tol / h) / std::log(FPHI);
+            const auto max_steps = static_cast<std::size_t>(rvn) + 1;
+            const auto ret_val = golden_ratio_minimize(f, bounds, tol, max_steps);
+            if(!ret_val.first) throw std::logic_error("Divergence of GRM?!");
+            return ret_val.second;
         };
     };
 };
